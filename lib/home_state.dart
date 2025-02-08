@@ -1,9 +1,12 @@
 // import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
-import 'package:my_blog_app/model/blog_api_call.dart';
-import 'package:my_blog_app/model/blog_model.dart';
+import 'dart:convert';
 
+import 'package:flutter/material.dart';
+// import 'package:my_blog_app/model/blog_api_call.dart';
+// import 'package:my_blog_app/model/blog_model.dart';
+import 'package:http/http.dart' as http;
+import 'package:my_blog_app/cached_image_network.dart';
 
 class MyHomeState extends StatefulWidget{
 const MyHomeState({super.key});
@@ -16,9 +19,7 @@ const MyHomeState({super.key});
 class MyHomePageState extends State<MyHomeState> with TickerProviderStateMixin{
   late TabController tabController;
   
-  List<BlogModel> _blogList = [];
-  bool _isLoading = true;
-   
+List <dynamic> blogs = [];
   
   @override
   void initState() {
@@ -26,50 +27,33 @@ class MyHomePageState extends State<MyHomeState> with TickerProviderStateMixin{
     super.initState();
     
     tabController = TabController(length: 3, vsync: this);
-    _fetchBlogModel();
+    _fetch_Blog_Data();
+   
   }
 
-  // void _fetchBlogModel() async{
-  //   try {
-  //     final blogs = await Blogapicall.fetchGetList();
-  //     _blogList = blogs;
-  //     _isLoading = false;
-  //   } catch (e) {
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-  //   }
-  //  }
-
-
-//   void _fetchBlogModel() async {
-//   try {
-//     final blogs = await Blogapicall.fetchGetList();
-//     setState(() {
-//       _blogList = blogs;
-//       _isLoading = false;
-//     });
-//   } catch (e) {
-//     setState(() {
-//       _isLoading = false;
-//     });
-//   }
-// }
-
-
-void _fetchBlogModel() async {
-  try {
-    final blog = await Blogapicall.fetchGetList();
-    setState(() {
-      _blogList = blog; 
-      _isLoading = false;
-    });
-  } catch (e) {
-    setState(() {
-      _isLoading = false;
-    });
+  void _fetch_Blog_Data() async {
+    final String url = "https://basic-blog.teamrabbil.com/api/post-details/3";
+  final Uri uri = Uri.parse(url);
+    // http.get(uri as Uri);
+    final response = await http.get(uri);
+    if(response.statusCode == 200){
+      final Map<String, dynamic> jsonData = jsonDecode(response.body);
+      print(response.body);
+setState(() {
+  blogs = jsonData['postComments'];
+});
+    }
+    // final body = response.body;
+    // final jsonDecode(body);
+    // setState(() {
+    //   users = joson['postComments']
+    // });
+    
   }
-}
+
+
+
+
 
 
 
@@ -151,62 +135,58 @@ void _fetchBlogModel() async {
                 children: [
 
                   // first
-                // Container(
-                //   child:_isLoading?ListView.builder( 
-                //   itemCount: 2,
-                //   itemBuilder: (context, index){
-                //     // final blogs = blogList[index];
-                //     return Container(
-                //       padding: EdgeInsets.symmetric(vertical: 10),
-                //       child: Row(
-                //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                //         children: [
-                //         Container(
-                //           child: Image.network("https://plus.unsplash.com/premium_photo-1738599623097-f630b1e4dab6?w=100&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwxfHx8ZW58MHx8fHx8",
-                //           fit: BoxFit.cover,
-                //           height: 150,
-                //           width: (MediaQuery.of(context).size.width / 2) - 40,
-                //           ),
-                //         ),
-                //         SizedBox(width: 20,),
-                //         Container(
-                //           width: (MediaQuery.of(context).size.width / 2) - 40,
-                //           child: Column(
-                //             crossAxisAlignment: CrossAxisAlignment.start,
-                //             children: [
-                //               Text("kjklgajklgjakl",
-                //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                //               ),
-                //               Text(
-                //                 "jan 12  " + " 8 min read", 
-                //                 style: TextStyle(
-                //                   color: Colors.blueGrey,
-                //                   fontSize: 13
-                //                 ),
-                //                 textAlign: TextAlign.end,
-                                
-                //               ),
-                //             ],
-                //           ),
-                //         )
-                //         ],
-                //       ),
-                //     );
-                //   })
-                // ),
-                
-                Container(
-                  child: _isLoading ?
-                Center(child: CircularProgressIndicator(),)
-                : ListView.builder(
-                  itemCount: _blogList.length,
+                Container(child: ListView.builder( 
+                  itemCount: blogs.length,
                   itemBuilder: (context, index){
-                  final blog = _blogList[index];
-                  return ListTile(
-                    title: Text(blog.id.toString()),
-                  );
-                })
+                     final blog = blogs[index];
+                    final id = blogs[index]['id'];
+                    final list_id = blogs[index]['list_id'];
+                    final author = blogs[index]['author'];
+                    final img = blogs[index]['img'];
+                    final comment = blogs[index]['comment'];
+                    final created_at = blogs[index]['created_at'];
+                    final updated_at = blogs[index]['updated_at'];
+                    
+                    return Container(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                        Container(
+                          child: getNetworkImage("$img"),
+                          // fit: BoxFit.cover,
+                          // height: 150,
+                          // width: (MediaQuery.of(context).size.width / 2) - 40,
+                          // ),
+                        ),
+                        SizedBox(width: 20,),
+                        Container(
+                          width: (MediaQuery.of(context).size.width / 2) - 40,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(comment,
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                "jan 12  " + " 8 min read", 
+                                style: TextStyle(
+                                  color: Colors.blueGrey,
+                                  fontSize: 13
+                                ),
+                                textAlign: TextAlign.end,
+                                
+                              ),
+                            ],
+                          ),
+                        )
+                        ],
+                      ),
+                    );
+                  })
                 ),
+
+
                   Container(
                   child: Icon(Icons.abc),
                 ),
@@ -222,6 +202,7 @@ void _fetchBlogModel() async {
           
           ],
         ),
+        
       ),
 
 
